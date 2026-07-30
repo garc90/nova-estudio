@@ -1,0 +1,841 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>NÓVA — Estúdio Criativo Digital</title>
+<meta name="description" content="Estúdio criativo digital. Sites, vídeo, conteúdo para campanhas, branding, redes sociais e prototipagem 3D." />
+<style>
+  :root{
+    --bg:#050308;
+    --bg-2:#0b0714;
+    --ink:#f7f4ff;
+    --ink-dim:#d6cff0;
+    --muted:#b3a9d0;
+    --violet:#8b5cff;
+    --magenta:#ff4ecd;
+    --cyan:#37e6ff;
+    --gold:#ffd479;
+    --line:rgba(255,255,255,.08);
+    --card:rgba(255,255,255,.025);
+    --grad:linear-gradient(110deg,#ff4ecd 0%,#8b5cff 45%,#37e6ff 100%);
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html{scroll-behavior:smooth;overflow-x:hidden;max-width:100%}
+  body{
+    background:var(--bg);
+    color:var(--ink);
+    font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+    overflow-x:hidden;
+    -webkit-font-smoothing:antialiased;
+    cursor:none;
+  }
+  @media (hover:none){ body{cursor:auto} .cursor,.cursor-dot{display:none} }
+  ::selection{background:var(--magenta);color:#fff}
+  a{color:inherit;text-decoration:none}
+  h1,h2,h3{font-weight:600;letter-spacing:-.03em;line-height:1}
+
+  /* ---------- Preloader ---------- */
+  #preloader{
+    position:fixed;inset:0;z-index:9999;background:var(--bg);
+    display:flex;align-items:center;justify-content:center;flex-direction:column;
+    transition:opacity .8s ease,visibility .8s ease;
+  }
+  #preloader.done{opacity:0;visibility:hidden}
+  .pl-mark{font-size:clamp(1.8rem,8vw,6rem);font-weight:700;letter-spacing:-.05em;
+    background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent;
+    opacity:0;transform:translateY(20px);animation:plIn .9s .1s forwards cubic-bezier(.16,1,.3,1)}
+  @keyframes plIn{to{opacity:1;transform:none}}
+  .pl-bar{width:min(280px,60vw);height:2px;background:rgba(255,255,255,.1);margin-top:26px;border-radius:2px;overflow:hidden}
+  .pl-fill{height:100%;width:0;background:var(--grad);transition:width .2s linear}
+  .pl-pct{margin-top:12px;font-size:.7rem;letter-spacing:.3em;color:var(--muted)}
+
+  /* ---------- Cursor ---------- */
+  .cursor{position:fixed;top:0;left:0;width:34px;height:34px;border:1px solid rgba(255,255,255,.4);
+    border-radius:50%;pointer-events:none;z-index:9000;transform:translate(-50%,-50%);
+    transition:width .3s,height .3s,background .3s,border-color .3s;mix-blend-mode:difference}
+  .cursor-dot{position:fixed;top:0;left:0;width:5px;height:5px;background:#fff;border-radius:50%;
+    pointer-events:none;z-index:9001;transform:translate(-50%,-50%)}
+  .cursor.grow{width:70px;height:70px;background:rgba(255,255,255,.12);border-color:transparent}
+
+  /* ---------- WebGL canvas ---------- */
+  #aurora{position:fixed;inset:0;width:100%;height:100%;z-index:0;display:block}
+  .grain{position:fixed;inset:0;z-index:1;pointer-events:none;opacity:.05;mix-blend-mode:overlay;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
+  .vignette{position:fixed;inset:0;z-index:1;pointer-events:none;
+    background:linear-gradient(rgba(5,3,8,.18),rgba(5,3,8,.4)),
+      radial-gradient(120% 120% at 50% 0%,transparent 38%,rgba(5,3,8,.62) 100%)}
+
+  /* ---------- Nav ---------- */
+  nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;justify-content:space-between;
+    align-items:center;padding:22px clamp(20px,5vw,64px);transition:padding .4s,background .4s;
+    backdrop-filter:blur(0px)}
+  nav.scrolled{padding:14px clamp(20px,5vw,64px);background:rgba(5,3,8,.6);backdrop-filter:blur(14px);
+    border-bottom:1px solid var(--line)}
+  .brand{font-weight:700;font-size:1.25rem;letter-spacing:-.02em;display:flex;align-items:center;gap:10px}
+  .brand .orb{width:11px;height:11px;border-radius:50%;background:var(--grad);
+    box-shadow:0 0 18px var(--magenta);animation:pulse 3s ease-in-out infinite}
+  @keyframes pulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.35);opacity:.7}}
+  .nav-links{display:flex;gap:34px;align-items:center}
+  .nav-links a{font-size:.82rem;color:var(--ink-dim);letter-spacing:.02em;transition:color .3s;position:relative}
+  .nav-links a::after{content:'';position:absolute;left:0;bottom:-5px;width:0;height:1px;background:var(--grad);transition:width .35s}
+  .nav-links a:hover{color:var(--ink)}
+  .nav-links a:hover::after{width:100%}
+  .nav-cta{border:1px solid var(--line);padding:9px 20px;border-radius:40px;font-size:.8rem;
+    color:var(--ink)!important;transition:all .3s;background:rgba(255,255,255,.02)}
+  .nav-cta:hover{background:var(--ink);color:#000!important;border-color:var(--ink)}
+  .burger{display:none;flex-direction:column;gap:5px;cursor:pointer;z-index:110}
+  .burger span{width:26px;height:2px;background:var(--ink);transition:.3s}
+
+  /* ---------- Layout ---------- */
+  section{position:relative;z-index:2}
+  .wrap{max-width:1240px;margin:0 auto;padding:0 clamp(20px,5vw,64px)}
+  .eyebrow{font-size:.72rem;letter-spacing:.42em;text-transform:uppercase;color:var(--violet);
+    display:inline-flex;align-items:center;gap:12px;margin-bottom:26px}
+  .eyebrow::before{content:'';width:34px;height:1px;background:var(--violet)}
+
+  /* ---------- Hero ---------- */
+  header.hero{min-height:100vh;display:flex;flex-direction:column;justify-content:center;
+    position:relative;z-index:2;padding:0 clamp(20px,5vw,64px)}
+  .hero-inner{max-width:1240px;margin:0 auto;width:100%}
+  .hero h1{font-size:clamp(2rem,9vw,10.5rem);font-weight:700;letter-spacing:-.055em;line-height:.94;overflow-wrap:break-word}
+  .hero h1 .l{display:inline-block;opacity:0;transform:translateY(120%) rotate(6deg);
+    animation:lineUp 1s forwards cubic-bezier(.16,1,.3,1)}
+  @keyframes lineUp{to{opacity:1;transform:none}}
+  .grad-text{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent;
+    background-size:200% auto;animation:shift 8s linear infinite}
+  @keyframes shift{to{background-position:200% center}}
+  .hero-sub{display:flex;flex-wrap:wrap;gap:28px;align-items:flex-end;justify-content:space-between;
+    margin-top:44px;opacity:0;animation:fadeUp 1s .8s forwards}
+  @keyframes fadeUp{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:none}}
+  .hero-sub p{max-width:440px;font-size:clamp(1rem,1.5vw,1.18rem);color:var(--ink-dim);line-height:1.6}
+  .hero-tags{display:flex;flex-wrap:wrap;gap:10px}
+  .tag{font-size:.72rem;letter-spacing:.04em;color:var(--ink-dim);border:1px solid var(--line);
+    padding:7px 15px;border-radius:40px;background:rgba(255,255,255,.02);transition:.3s}
+  .tag:hover{color:var(--ink);border-color:var(--violet);transform:translateY(-3px)}
+  .scroll-hint{position:absolute;bottom:34px;left:0;right:0;font-size:.68rem;
+    letter-spacing:.35em;text-indent:.35em;color:var(--muted);text-transform:uppercase;display:flex;flex-direction:column;
+    align-items:center;gap:10px;opacity:0;animation:fadeUp 1s 1.4s forwards}
+  .scroll-hint .ln{width:1px;height:46px;background:linear-gradient(var(--violet),transparent);
+    animation:drop 2s ease-in-out infinite}
+  @keyframes drop{0%{transform:scaleY(0);transform-origin:top}50%{transform:scaleY(1);transform-origin:top}
+    50.1%{transform:scaleY(1);transform-origin:bottom}100%{transform:scaleY(0);transform-origin:bottom}}
+
+  /* ---------- Marquee ---------- */
+  .marquee{border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:26px 0;
+    overflow:hidden;white-space:nowrap;background:rgba(11,7,20,.4);backdrop-filter:blur(6px)}
+  .marquee-track{display:inline-flex;gap:52px;animation:scroll 30s linear infinite;will-change:transform}
+  .marquee:hover .marquee-track{animation-play-state:paused}
+  .marquee span{font-size:clamp(1.3rem,3vw,2.1rem);font-weight:600;letter-spacing:-.02em;color:var(--ink);
+    display:inline-flex;align-items:center;gap:52px}
+  .marquee span::after{content:'✦';color:var(--violet);font-size:1rem}
+  @keyframes scroll{to{transform:translateX(-50%)}}
+
+  /* ---------- Sections ---------- */
+  .sec-pad{padding:clamp(90px,13vh,170px) 0}
+  .sec-head{max-width:760px;margin-bottom:70px}
+  .sec-head h2{font-size:clamp(2rem,5.5vw,4.4rem);line-height:1.02}
+  .sec-head p{margin-top:22px;color:var(--ink-dim);font-size:clamp(1rem,1.4vw,1.15rem);line-height:1.65;max-width:560px}
+
+  /* Manifesto */
+  .manifesto p{font-size:clamp(1.5rem,4.2vw,3.4rem);line-height:1.22;font-weight:500;letter-spacing:-.02em;max-width:1000px}
+  .manifesto .dim{color:var(--muted)}
+  .manifesto .hl{color:var(--ink)}
+
+  /* Services */
+  .svc-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:0;border-top:1px solid var(--line)}
+  .svc{padding:46px 34px 46px 0;border-bottom:1px solid var(--line);border-right:1px solid var(--line);
+    position:relative;overflow:hidden;transition:padding .4s}
+  .svc:nth-child(3n){border-right:none}
+  .svc-num{font-size:.72rem;color:var(--violet);letter-spacing:.2em;margin-bottom:26px}
+  .svc h3{font-size:clamp(1.4rem,2.4vw,1.95rem);margin-bottom:16px;transition:transform .4s}
+  .svc p{color:var(--muted);font-size:.95rem;line-height:1.6;max-width:330px;transition:color .4s}
+  .svc .doit{margin-top:22px;display:flex;flex-wrap:wrap;gap:8px}
+  .svc .doit b{font-weight:400;font-size:.72rem;color:var(--ink-dim);border:1px solid var(--line);
+    padding:5px 11px;border-radius:30px}
+  .svc .glow{position:absolute;inset:0;background:radial-gradient(400px 300px at var(--mx,50%) var(--my,0%),
+    rgba(139,92,255,.14),transparent 70%);opacity:0;transition:opacity .5s;pointer-events:none}
+  .svc:hover .glow{opacity:1}
+  .svc:hover h3{transform:translateX(10px)}
+  .svc:hover p{color:var(--ink-dim)}
+  .svc .arrow{position:absolute;top:46px;right:24px;opacity:0;transform:translate(-8px,8px);
+    transition:.4s;color:var(--violet)}
+  .svc:hover .arrow{opacity:1;transform:none}
+
+  /* Process */
+  .proc{display:grid;grid-template-columns:repeat(4,1fr);gap:28px}
+  .step{position:relative;padding-top:30px;border-top:1px solid var(--line)}
+  .step .n{position:absolute;top:-1px;left:0;width:34px;height:1px;background:var(--grad)}
+  .step .k{font-size:.72rem;color:var(--violet);letter-spacing:.2em;margin-bottom:16px}
+  .step h4{font-size:1.15rem;margin-bottom:10px;font-weight:600}
+  .step p{color:var(--muted);font-size:.9rem;line-height:1.6}
+
+  /* Why / new agency honest */
+  .why{display:grid;grid-template-columns:1.1fr .9fr;gap:60px;align-items:center}
+  .why-list{display:flex;flex-direction:column;gap:2px}
+  .why-item{padding:26px 0;border-bottom:1px solid var(--line);display:flex;gap:22px;align-items:flex-start}
+  .why-item:first-child{border-top:1px solid var(--line)}
+  .why-item .ico{flex:0 0 auto;width:42px;height:42px;border-radius:12px;display:grid;place-items:center;
+    background:rgba(139,92,255,.1);border:1px solid rgba(139,92,255,.25)}
+  .why-item h4{font-size:1.1rem;margin-bottom:6px}
+  .why-item p{color:var(--muted);font-size:.92rem;line-height:1.55}
+  /* studio showreel (canvas motion, isolated rl- namespace) */
+  .studio-card{position:relative;aspect-ratio:1;border-radius:24px;border:1px solid var(--line);overflow:hidden;
+    background:#08050f;box-shadow:0 30px 80px rgba(0,0,0,.5)}
+  .rl-canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+  .rl-ui{position:absolute;inset:0;pointer-events:none;display:flex;flex-direction:column;justify-content:space-between;padding:16px}
+  .rl-top{display:flex;justify-content:space-between;align-items:flex-start}
+  .rl-live{display:flex;align-items:center;gap:7px;font-size:.6rem;letter-spacing:.2em;text-transform:uppercase;color:#fff;
+    background:rgba(0,0,0,.32);padding:6px 11px;border-radius:20px;backdrop-filter:blur(6px);border:1px solid rgba(255,255,255,.12)}
+  .rl-live i{width:7px;height:7px;border-radius:50%;background:#ff4e7d;box-shadow:0 0 10px #ff4e7d;animation:pulse 1.6s infinite}
+  .rl-tc{font-size:.6rem;color:#fff;letter-spacing:.1em;background:rgba(0,0,0,.32);padding:6px 10px;border-radius:20px;
+    backdrop-filter:blur(6px);border:1px solid rgba(255,255,255,.12);font-variant-numeric:tabular-nums}
+  .rl-bottom{display:flex;flex-direction:column;gap:12px}
+  .rl-sub{font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.72)}
+  .rl-dots{display:flex;gap:6px}
+  .rl-dots b{width:16px;height:3px;border-radius:3px;background:rgba(255,255,255,.22);transition:.4s}
+  .rl-dots b.on{background:var(--grad);width:30px}
+  /* CTA */
+  .cta{text-align:center;padding:clamp(90px,15vh,180px) 0}
+  .cta h2{font-size:clamp(2.4rem,9vw,7.5rem);line-height:.95;margin-bottom:34px}
+  .cta .big-link{display:inline-flex;align-items:center;gap:18px;font-size:clamp(1.1rem,2vw,1.6rem);
+    font-weight:500;padding:20px 40px;border-radius:60px;background:var(--grad);color:#0a0510;
+    transition:transform .4s,box-shadow .4s;box-shadow:0 0 0 rgba(139,92,255,0)}
+  .cta .big-link:hover{transform:translateY(-4px) scale(1.02);box-shadow:0 20px 60px rgba(139,92,255,.4)}
+  .cta .sub{margin-top:28px;color:var(--muted);font-size:.9rem}
+
+  /* Contact form */
+  .contact{display:grid;grid-template-columns:.8fr 1.2fr;gap:60px}
+  .contact-info h3{font-size:1.6rem;margin-bottom:20px}
+  .contact-info p{color:var(--ink-dim);line-height:1.7;margin-bottom:26px;font-size:.98rem}
+  .contact-info a.mail{font-size:1.15rem;color:var(--ink);border-bottom:1px solid var(--violet);padding-bottom:3px}
+  .socials{display:flex;gap:14px;margin-top:30px}
+  .socials a{width:42px;height:42px;border:1px solid var(--line);border-radius:50%;display:grid;
+    place-items:center;color:var(--ink-dim);transition:.3s}
+  .socials a:hover{color:var(--ink);border-color:var(--violet);transform:translateY(-3px)}
+  form{display:grid;gap:22px}
+  .row{display:grid;grid-template-columns:1fr 1fr;gap:22px}
+  .field{position:relative}
+  .field label{position:absolute;left:0;top:14px;color:var(--muted);font-size:.95rem;transition:.3s;pointer-events:none}
+  .field input,.field textarea{width:100%;background:transparent;border:none;border-bottom:1px solid var(--line);
+    padding:14px 0;color:var(--ink);font-size:1rem;font-family:inherit;transition:border-color .3s}
+  .field textarea{resize:none;min-height:80px}
+  .field input:focus,.field textarea:focus{outline:none;border-color:var(--violet)}
+  .field input:focus~label,.field input:valid~label,
+  .field textarea:focus~label,.field textarea:valid~label{top:-12px;font-size:.72rem;color:var(--violet);letter-spacing:.05em}
+  .chips{display:flex;flex-wrap:wrap;gap:10px}
+  .chip{font-size:.8rem;color:var(--ink-dim);border:1px solid var(--line);padding:9px 16px;border-radius:30px;
+    cursor:pointer;transition:.25s;user-select:none}
+  .chip.on{background:var(--violet);border-color:var(--violet);color:#fff}
+  .submit{justify-self:start;border:none;background:var(--ink);color:#000;padding:15px 34px;border-radius:40px;
+    font-size:.95rem;font-weight:600;cursor:pointer;transition:.3s;font-family:inherit}
+  .submit:hover{background:var(--violet);color:#fff;transform:translateY(-2px)}
+  .form-note{font-size:.8rem;color:var(--muted)}
+
+  /* Footer */
+  footer{position:relative;z-index:2;border-top:1px solid var(--line);padding-top:70px;margin-top:40px}
+  .foot-mark{font-size:clamp(2.6rem,20vw,20rem);font-weight:700;letter-spacing:-.06em;line-height:.8;
+    text-align:center;background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent;
+    opacity:.9;padding-bottom:20px}
+  .foot-bar{display:flex;justify-content:space-between;flex-wrap:wrap;gap:16px;padding:30px clamp(20px,5vw,64px);
+    border-top:1px solid var(--line);color:var(--muted);font-size:.8rem}
+  .foot-bar a:hover{color:var(--ink)}
+
+  /* reveal */
+  .reveal{opacity:0;transform:translateY(40px);transition:opacity .9s cubic-bezier(.16,1,.3,1),transform .9s cubic-bezier(.16,1,.3,1)}
+  .reveal.in{opacity:1;transform:none}
+
+  @media(max-width:900px){
+    .nav-links{position:fixed;inset:0;background:rgba(5,3,8,.97);backdrop-filter:blur(20px);
+      flex-direction:column;justify-content:center;gap:34px;transform:translateX(100%);transition:transform .5s;z-index:105}
+    .nav-links.open{transform:none}
+    .nav-links a{font-size:1.4rem}
+    .burger{display:flex}
+    .svc-grid{grid-template-columns:1fr}
+    .svc{border-right:none!important;padding-right:0}
+    .proc{grid-template-columns:1fr 1fr}
+    .why{grid-template-columns:1fr;gap:40px}
+    .studio-card{max-width:440px;width:100%;margin:0 auto}
+    .contact{grid-template-columns:1fr;gap:44px}
+    .row{grid-template-columns:1fr}
+  }
+  @media(max-width:600px){
+    .hero-inner{text-align:center}
+    .hero .eyebrow{justify-content:center}
+    .hero-sub{align-items:center;text-align:center}
+    .hero-sub p{margin:0 auto}
+    .hero-tags{justify-content:center}
+    .sec-head{margin-left:auto;margin-right:auto;text-align:center}
+    .sec-head .eyebrow{justify-content:center}
+    .sec-head p{margin-left:auto;margin-right:auto}
+    .manifesto p{text-align:center;margin:0 auto}
+    .why > div:first-child{text-align:center}
+    .why > div:first-child .eyebrow{justify-content:center}
+    .why > div:first-child h2,.why > div:first-child p{margin-left:auto;margin-right:auto}
+    .contact-info{text-align:center}
+    .contact-info .socials{justify-content:center}
+    .submit{justify-self:center}
+  }
+  @media(max-width:520px){
+    .proc{grid-template-columns:1fr} .hero-sub{flex-direction:column;align-items:flex-start}
+    .hero h1{font-size:clamp(1.8rem,11vw,3rem);line-height:1.0}
+    .sec-head h2{font-size:clamp(1.6rem,8vw,2.4rem)}
+    .manifesto p{font-size:clamp(1.2rem,6vw,1.8rem)}
+    .cta h2{font-size:clamp(2rem,13vw,3.4rem)}
+    .foot-mark{font-size:clamp(2.4rem,20vw,5rem)}
+    .wrap,header.hero{padding-left:20px;padding-right:20px}
+  }
+  @media(max-width:360px){
+    .hero h1{font-size:8vw} .pl-mark{font-size:2rem}
+    .sec-head h2{font-size:6.5vw} .cta h2{font-size:11vw}
+    .nav-links{gap:24px}
+  }
+  /* WhatsApp floating button (brand-colored) */
+  .wa-fab{position:fixed;right:22px;bottom:22px;z-index:200;width:58px;height:58px;border-radius:50%;
+    display:grid;place-items:center;color:#fff;background:var(--grad);
+    box-shadow:0 10px 30px rgba(139,92,255,.45);transition:transform .3s,box-shadow .3s;animation:waPulse 2.8s infinite}
+  .wa-fab:hover{transform:translateY(-3px) scale(1.06)}
+  .wa-fab svg{width:30px;height:30px;filter:drop-shadow(0 1px 2px rgba(0,0,0,.25))}
+  @keyframes waPulse{0%{box-shadow:0 10px 30px rgba(139,92,255,.45),0 0 0 0 rgba(255,78,205,.4)}
+    70%{box-shadow:0 10px 30px rgba(139,92,255,.45),0 0 0 16px rgba(255,78,205,0)}
+    100%{box-shadow:0 10px 30px rgba(139,92,255,.45),0 0 0 0 rgba(255,78,205,0)}}
+  @media(max-width:520px){.wa-fab{width:52px;height:52px;right:16px;bottom:16px}.wa-fab svg{width:27px;height:27px}}
+</style>
+</head>
+<body>
+
+<!-- Preloader -->
+<div id="preloader">
+  <div class="pl-mark">NÓVA</div>
+  <div class="pl-bar"><div class="pl-fill" id="plFill"></div></div>
+  <div class="pl-pct" id="plPct">0%</div>
+</div>
+
+<div class="cursor" id="cursor"></div>
+<div class="cursor-dot" id="cursorDot"></div>
+
+<canvas id="aurora"></canvas>
+<div class="grain"></div>
+<div class="vignette"></div>
+
+<!-- Nav -->
+<nav id="nav">
+  <a href="#top" class="brand"><span class="orb"></span>NÓVA</a>
+  <div class="nav-links" id="navLinks">
+    <a href="#servicos">Serviços</a>
+    <a href="#processo">Processo</a>
+    <a href="#estudio">Estúdio</a>
+    <a href="#contato" class="nav-cta">Vamos conversar</a>
+  </div>
+  <div class="burger" id="burger"><span></span><span></span><span></span></div>
+</nav>
+
+<!-- Hero -->
+<header class="hero" id="top">
+  <div class="hero-inner">
+    <div class="eyebrow reveal">Estúdio criativo digital</div>
+    <h1>
+      <span class="l" style="animation-delay:.15s">Ideias que</span><br>
+      <span class="l grad-text" style="animation-delay:.3s">ganham vida.</span>
+    </h1>
+    <div class="hero-sub">
+      <p>Direção criativa de ponta a ponta. Identidade, sites, vídeo e 3D criados para fazer sua marca parar o dedo e virar referência.</p>
+      <div class="hero-tags">
+        <span class="tag">Sites</span>
+        <span class="tag">Apps</span>
+        <span class="tag">Vídeo</span>
+        <span class="tag">Campanhas</span>
+        <span class="tag">Branding</span>
+        <span class="tag">Social</span>
+        <span class="tag">3D</span>
+      </div>
+    </div>
+  </div>
+  <div class="scroll-hint"><span>Role para explorar</span><span class="ln"></span></div>
+</header>
+
+<!-- Marquee -->
+<div class="marquee">
+  <div class="marquee-track">
+    <span>Sites &amp; Web</span><span>Aplicativos</span><span>Vídeo &amp; Motion</span><span>Conteúdo</span>
+    <span>Branding</span><span>Redes Sociais</span><span>Prototipagem 3D</span>
+    <span>Sites &amp; Web</span><span>Aplicativos</span><span>Vídeo &amp; Motion</span><span>Conteúdo</span>
+    <span>Branding</span><span>Redes Sociais</span><span>Prototipagem 3D</span>
+  </div>
+</div>
+
+<!-- Manifesto -->
+<section class="sec-pad">
+  <div class="wrap manifesto reveal">
+    <p><span class="hl">Marca não é logo.</span> <span class="dim">É a primeira impressão, o feed que segura o dedo, o vídeo que faz parar de rolar e o site que transforma curiosidade em cliente.</span> <span class="hl">A gente cuida de tudo isso.</span></p>
+  </div>
+</section>
+
+<!-- Services -->
+<section class="sec-pad" id="servicos">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <div class="eyebrow">O que fazemos</div>
+      <h2>Sete frentes, uma direção criativa.</h2>
+      <p>Tudo o que sua marca precisa para existir e crescer no digital — sem terceirizar a alma do projeto.</p>
+    </div>
+    <div class="svc-grid" id="svcGrid">
+      <div class="svc reveal"><div class="glow"></div><span class="arrow">↗</span>
+        <div class="svc-num">01</div>
+        <h3>Sites &amp; Experiências Web</h3>
+        <p>Sites rápidos, bonitos e feitos para converter — do institucional à landing page de campanha.</p>
+        <div class="doit"><b>Landing pages</b><b>Institucional</b><b>Portfólios</b></div>
+      </div>
+      <div class="svc reveal"><div class="glow"></div><span class="arrow">↗</span>
+        <div class="svc-num">02</div>
+        <h3>Edição &amp; Criação de Vídeo</h3>
+        <p>Do roteiro ao corte final. Reels, VSLs, institucionais e motion que prendem a atenção.</p>
+        <div class="doit"><b>Reels</b><b>Motion</b><b>Edição</b></div>
+      </div>
+      <div class="svc reveal"><div class="glow"></div><span class="arrow">↗</span>
+        <div class="svc-num">03</div>
+        <h3>Conteúdo para Campanhas</h3>
+        <p>Conceito, roteiro e peças pensados para uma ação com objetivo claro — lançamento, oferta ou data.</p>
+        <div class="doit"><b>Conceito</b><b>Roteiro</b><b>Peças</b></div>
+      </div>
+      <div class="svc reveal"><div class="glow"></div><span class="arrow">↗</span>
+        <div class="svc-num">04</div>
+        <h3>Branding &amp; Identidade</h3>
+        <p>Nome, logo, paleta, tipografia e o sistema visual completo para sua marca ter personalidade.</p>
+        <div class="doit"><b>Identidade</b><b>Logo</b><b>Guia de marca</b></div>
+      </div>
+      <div class="svc reveal"><div class="glow"></div><span class="arrow">↗</span>
+        <div class="svc-num">05</div>
+        <h3>Redes Sociais</h3>
+        <p>Presença consistente: linha visual, criativos e conteúdo que constrói audiência de verdade.</p>
+        <div class="doit"><b>Feed</b><b>Stories</b><b>Criativos</b></div>
+      </div>
+      <div class="svc reveal"><div class="glow"></div><span class="arrow">↗</span>
+        <div class="svc-num">06</div>
+        <h3>Prototipagem 3D</h3>
+        <p>Modelagem e render 3D para produtos, embalagens e cenas — antes de existirem no mundo real.</p>
+        <div class="doit"><b>Modelagem</b><b>Render</b><b>Produto</b></div>
+      </div>
+      <div class="svc reveal"><div class="glow"></div><span class="arrow">↗</span>
+        <div class="svc-num">07</div>
+        <h3>Criação de Aplicativos</h3>
+        <p>Apps mobile e web sob medida — do protótipo à publicação, com foco em experiência e performance.</p>
+        <div class="doit"><b>iOS &amp; Android</b><b>Web apps</b><b>UX/UI</b></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Process -->
+<section class="sec-pad" id="processo">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <div class="eyebrow">Como trabalhamos</div>
+      <h2>Do briefing ao lançamento, sem ruído.</h2>
+    </div>
+    <div class="proc">
+      <div class="step reveal"><span class="n"></span><div class="k">01 — Imersão</div><h4>Entender</h4><p>Conversa franca sobre marca, público e objetivo. Sem imersão não tem criação.</p></div>
+      <div class="step reveal"><span class="n"></span><div class="k">02 — Conceito</div><h4>Criar</h4><p>Direção criativa e conceito antes de qualquer pixel. A ideia guia a execução.</p></div>
+      <div class="step reveal"><span class="n"></span><div class="k">03 — Produção</div><h4>Fazer</h4><p>Design, código, vídeo e 3D produzidos com acompanhamento e revisões.</p></div>
+      <div class="step reveal"><span class="n"></span><div class="k">04 — Entrega</div><h4>Lançar</h4><p>Entrega final, ajustes e suporte para colocar tudo no ar do jeito certo.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- Why / studio -->
+<section class="sec-pad" id="estudio">
+  <div class="wrap why">
+    <div class="reveal">
+      <div class="eyebrow">O estúdio</div>
+      <h2 style="font-size:clamp(2rem,5vw,3.6rem);line-height:1.04;margin-bottom:20px">Um estúdio. Todas as frentes da sua marca.</h2>
+      <p style="color:var(--ink-dim);line-height:1.7;font-size:1.02rem;margin-bottom:38px;max-width:460px">Marca, site, vídeo, social e 3D sob uma única visão criativa. Nada de fornecedor solto e resultado desconexo — cada peça conversa com a próxima e constrói a mesma história.</p>
+      <div class="why-list">
+        <div class="why-item"><div class="ico">◈</div><div><h4>Direção criativa unificada</h4><p>Uma só assinatura visual em tudo — coerente do primeiro post ao produto 3D.</p></div></div>
+        <div class="why-item"><div class="ico">⬡</div><div><h4>Estética com propósito</h4><p>Bonito é o mínimo. Cada peça existe para converter atenção em cliente.</p></div></div>
+        <div class="why-item"><div class="ico">✦</div><div><h4>Padrão premium, ponta a ponta</h4><p>Acabamento de estúdio grande — do briefing à entrega final.</p></div></div>
+      </div>
+    </div>
+    <div class="studio-card reveal">
+      <canvas class="rl-canvas" id="rlCanvas"></canvas>
+      <div class="rl-ui">
+        <div class="rl-top">
+          <span class="rl-live"><i></i> Showreel</span>
+          <span class="rl-tc" id="rlTc">00:00</span>
+        </div>
+        <div class="rl-bottom">
+          <div class="rl-sub" id="rlSub">Identidade &amp; logo</div>
+          <div class="rl-dots" id="rlDots"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="cta" id="contato">
+  <div class="wrap reveal">
+    <h2>Pronto para<br><span class="grad-text">se destacar?</span></h2>
+    <a href="#form" class="big-link">Iniciar um projeto <span>→</span></a>
+    <div class="sub">Resposta em até 24h.</div>
+  </div>
+</section>
+
+<!-- Contact form -->
+<section class="sec-pad" id="form" style="padding-top:0">
+  <div class="wrap contact">
+    <div class="contact-info reveal">
+      <h3>Conta pra gente<br>o que você precisa.</h3>
+      <p>Um projeto, uma ideia solta ou só uma dúvida — manda que a gente responde.</p>
+      <a href="mailto:mbrgprodutosltda@gmail.com" class="mail">mbrgprodutosltda@gmail.com</a>
+      <div class="socials">
+        <a href="#" aria-label="Instagram" title="Instagram">◎</a>
+        <a href="#" aria-label="Behance" title="Behance">Bē</a>
+        <a href="#" aria-label="LinkedIn" title="LinkedIn">in</a>
+        <a href="#" aria-label="WhatsApp" title="WhatsApp">✆</a>
+      </div>
+    </div>
+    <form class="reveal" id="contactForm" onsubmit="return false">
+      <div class="row">
+        <div class="field"><input type="text" id="nome" required><label for="nome">Seu nome</label></div>
+        <div class="field"><input type="email" id="email" required><label for="email">Seu e-mail</label></div>
+      </div>
+      <div>
+        <div style="font-size:.75rem;letter-spacing:.1em;color:var(--muted);margin-bottom:14px;text-transform:uppercase">O que você precisa?</div>
+        <div class="chips" id="chips">
+          <span class="chip">Site</span><span class="chip">Vídeo</span><span class="chip">Campanha</span>
+          <span class="chip">Branding</span><span class="chip">Social</span><span class="chip">3D</span>
+        </div>
+      </div>
+      <div class="field"><textarea id="msg" required></textarea><label for="msg">Conta um pouco do projeto</label></div>
+      <button class="submit" id="submitBtn">Enviar mensagem</button>
+      <div class="form-note" id="formNote">Ao enviar, abrimos seu app de e-mail com a mensagem pronta.</div>
+    </form>
+  </div>
+</section>
+
+<!-- Footer -->
+<footer>
+  <div class="foot-mark">NÓVA</div>
+  <div class="foot-bar">
+    <span>© 2026 NÓVA Estúdio — Estúdio criativo digital</span>
+    <span>Direção criativa ✦ do briefing ao lançamento</span>
+    <a href="#top">Voltar ao topo ↑</a>
+  </div>
+</footer>
+
+<script>
+/* ---------- Preloader ---------- */
+(function(){
+  const fill=document.getElementById('plFill'),pct=document.getElementById('plPct'),pl=document.getElementById('preloader');
+  let p=0;const t=setInterval(()=>{p+=Math.random()*16;if(p>=100){p=100;clearInterval(t);
+    setTimeout(()=>{pl.classList.add('done');document.body.style.overflow='';},420);}
+    fill.style.width=p+'%';pct.textContent=Math.floor(p)+'%';},130);
+  document.body.style.overflow='hidden';
+})();
+
+/* ---------- Cursor ---------- */
+(function(){
+  if(matchMedia('(hover:none)').matches)return;
+  const c=document.getElementById('cursor'),d=document.getElementById('cursorDot');
+  let x=innerWidth/2,y=innerHeight/2,cx=x,cy=y;
+  addEventListener('mousemove',e=>{x=e.clientX;y=e.clientY;d.style.left=x+'px';d.style.top=y+'px';});
+  (function loop(){cx+=(x-cx)*.16;cy+=(y-cy)*.16;c.style.left=cx+'px';c.style.top=cy+'px';requestAnimationFrame(loop);})();
+  const grow='a,button,.chip,.svc,.tag,.socials a,.big-link,.burger';
+  document.querySelectorAll(grow).forEach(el=>{
+    el.addEventListener('mouseenter',()=>c.classList.add('grow'));
+    el.addEventListener('mouseleave',()=>c.classList.remove('grow'));
+  });
+})();
+
+/* ---------- Aurora WebGL shader (fluid / mystical) ---------- */
+(function(){
+  const cv=document.getElementById('aurora');
+  const gl=cv.getContext('webgl')||cv.getContext('experimental-webgl');
+  if(!gl){ // fallback: soft CSS gradient
+    cv.style.background='radial-gradient(140% 120% at 50% 0%,#1a0b2e,#050308 60%)';return;
+  }
+  function rs(){cv.width=innerWidth*Math.min(devicePixelRatio,2);cv.height=innerHeight*Math.min(devicePixelRatio,2);
+    gl.viewport(0,0,cv.width,cv.height);}
+  rs();addEventListener('resize',rs);
+  const vs=`attribute vec2 p;void main(){gl_Position=vec4(p,0.,1.);}`;
+  const fs=`
+  precision highp float;
+  uniform vec2 r;uniform float t;uniform vec2 m;
+  // hash + noise
+  float hash(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
+  float noise(vec2 p){vec2 i=floor(p),f=fract(p);vec2 u=f*f*(3.-2.*f);
+    return mix(mix(hash(i),hash(i+vec2(1,0)),u.x),mix(hash(i+vec2(0,1)),hash(i+vec2(1,1)),u.x),u.y);}
+  float fbm(vec2 p){float v=0.,a=.5;mat2 rot=mat2(.8,-.6,.6,.8);
+    for(int i=0;i<6;i++){v+=a*noise(p);p=rot*p*2.0+vec2(t*.05,-t*.03);a*=.5;}return v;}
+  void main(){
+    vec2 uv=gl_FragCoord.xy/r.xy;
+    vec2 p=uv;p.x*=r.x/r.y;
+    float mo=(m.x-.5)*.4;
+    // flowing domain warp
+    vec2 q=vec2(fbm(p*1.4+vec2(0.,t*.06)),fbm(p*1.4+vec2(5.2,1.3)-t*.04));
+    vec2 rr=vec2(fbm(p*1.6+q*1.8+vec2(1.7,9.2)+mo),fbm(p*1.6+q*1.8+vec2(8.3,2.8)));
+    float f=fbm(p*1.5+rr*2.2);
+    // mystical palette: deep space -> violet -> magenta -> cyan glow
+    vec3 c1=vec3(0.02,0.01,0.05);         // near black space
+    vec3 c2=vec3(0.35,0.12,0.55);         // violet
+    vec3 c3=vec3(0.95,0.30,0.80);         // magenta
+    vec3 c4=vec3(0.15,0.85,1.0);          // cyan
+    vec3 col=mix(c1,c2,smoothstep(.0,.7,f));
+    col=mix(col,c3,smoothstep(.45,1.05,f)*.75);
+    col=mix(col,c4,smoothstep(.6,1.2,length(rr))*.35);
+    // glow toward top center (aurora)
+    float glow=pow(1.0-uv.y,2.0)*.35;
+    col+=c2*glow*(.6+.4*sin(t*.4));
+    // subtle vertical fade so text stays readable at bottom
+    col*= .55+ .55*smoothstep(1.0,.15,uv.y);
+    // vignette
+    col*=1.0-.5*length(uv-vec2(.5,.35));
+    gl_FragColor=vec4(col,1.0);
+  }`;
+  function sh(ty,src){const s=gl.createShader(ty);gl.shaderSource(s,src);gl.compileShader(s);return s;}
+  const pr=gl.createProgram();gl.attachShader(pr,sh(gl.VERTEX_SHADER,vs));gl.attachShader(pr,sh(gl.FRAGMENT_SHADER,fs));
+  gl.linkProgram(pr);gl.useProgram(pr);
+  const buf=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,buf);
+  gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,1,-1,-1,1,1,1]),gl.STATIC_DRAW);
+  const loc=gl.getAttribLocation(pr,'p');gl.enableVertexAttribArray(loc);gl.vertexAttribPointer(loc,2,gl.FLOAT,false,0,0);
+  const uR=gl.getUniformLocation(pr,'r'),uT=gl.getUniformLocation(pr,'t'),uM=gl.getUniformLocation(pr,'m');
+  let mx=.5,my=.5;addEventListener('mousemove',e=>{mx=e.clientX/innerWidth;my=e.clientY/innerHeight;});
+  const start=performance.now();
+  (function draw(){const t=(performance.now()-start)/1000;
+    gl.uniform2f(uR,cv.width,cv.height);gl.uniform1f(uT,t);gl.uniform2f(uM,mx,my);
+    gl.drawArrays(gl.TRIANGLE_STRIP,0,4);requestAnimationFrame(draw);})();
+})();
+
+
+/* ---------- Studio showreel (canvas motion, literal processes) ---------- */
+(function(){
+  const cv=document.getElementById('rlCanvas');if(!cv)return;
+  const ctx=cv.getContext('2d');
+  const tcEl=document.getElementById('rlTc'),subEl=document.getElementById('rlSub'),dotsEl=document.getElementById('rlDots');
+  let W=0,H=0,DPR=Math.min(devicePixelRatio||1,2);
+  function resize(){const r=cv.getBoundingClientRect();W=r.width||420;H=r.height||420;cv.width=W*DPR;cv.height=H*DPR;ctx.setTransform(DPR,0,0,DPR,0,0);}
+  resize();addEventListener('resize',resize);
+  const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+  const easeOut=t=>1-Math.pow(1-clamp(t,0,1),3);
+  function rr(x,y,w,h,r){r=Math.min(r,w/2,h/2);ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath();}
+  function hex(h,a){const n=parseInt(h.slice(1),16);return 'rgba('+(n>>16&255)+','+(n>>8&255)+','+(n&255)+','+a+')';}
+  const parts=Array.from({length:32},()=>({x:Math.random(),y:Math.random(),r:Math.random()*1.3+.4,s:Math.random()*.5+.2}));
+  function bg(now,c1,c2){
+    ctx.globalCompositeOperation='source-over';ctx.fillStyle='#08050f';ctx.fillRect(0,0,W,H);
+    ctx.globalCompositeOperation='lighter';const t=now/1000;
+    function blob(x,y,r,col){const g=ctx.createRadialGradient(x,y,0,x,y,r);g.addColorStop(0,col);g.addColorStop(1,col.replace(/[\d.]+\)$/,'0)'));ctx.fillStyle=g;ctx.beginPath();ctx.arc(x,y,r,0,7);ctx.fill();}
+    blob(W*(0.3+0.12*Math.sin(t*0.5)),H*(0.26+0.1*Math.cos(t*0.4)),W*0.55,hex(c1,0.26));
+    blob(W*(0.72+0.1*Math.cos(t*0.45)),H*(0.72+0.1*Math.sin(t*0.6)),W*0.5,hex(c2,0.24));
+    ctx.fillStyle='rgba(255,255,255,.4)';
+    parts.forEach(p=>{p.y-=p.s*0.0016;if(p.y<0)p.y=1;ctx.globalAlpha=.4;ctx.beginPath();ctx.arc(p.x*W,p.y*H,p.r,0,7);ctx.fill();});
+    ctx.globalAlpha=1;ctx.globalCompositeOperation='source-over';
+  }
+  function label(txt,col){ctx.save();ctx.fillStyle=col;ctx.beginPath();ctx.arc(20,26,4,0,7);ctx.fill();
+    ctx.fillStyle='rgba(255,255,255,.9)';ctx.textAlign='left';ctx.textBaseline='middle';
+    ctx.font='700 12px Inter,Arial,sans-serif';ctx.fillText(txt.toUpperCase(),32,26);ctx.restore();}
+  const env=p=>Math.min(1,p/0.12)*Math.min(1,(1-p)/0.12);
+
+  function sBranding(p,c1,c2){
+    const cx=W/2,cy=H*0.48,S=Math.min(W,H)*0.16;
+    ctx.save();ctx.globalAlpha=env(p);
+    ctx.fillStyle='rgba(255,255,255,.05)';rr(cx-S*2.1,cy-S*1.9,S*4.2,S*3.8,16);ctx.fill();
+    ctx.strokeStyle='rgba(255,255,255,.1)';ctx.lineWidth=1;ctx.stroke();
+    ctx.fillStyle='rgba(255,255,255,.06)';
+    for(let gx=-1;gx<=1;gx++)for(let gy=-1;gy<=1;gy++){ctx.beginPath();ctx.arc(cx+gx*S,cy+gy*S,1.5,0,7);ctx.fill();}
+    const path=[[cx-S,cy+S],[cx-S,cy-S],[cx+S,cy+S],[cx+S,cy-S]];
+    let segL=[],tot=0;for(let i=0;i<path.length-1;i++){const l=Math.hypot(path[i+1][0]-path[i][0],path[i+1][1]-path[i][1]);segL.push(l);tot+=l;}
+    const target=clamp(p/0.6,0,1)*tot;
+    ctx.strokeStyle=hex(c1,1);ctx.lineWidth=6;ctx.lineJoin='round';ctx.lineCap='round';
+    ctx.beginPath();ctx.moveTo(path[0][0],path[0][1]);
+    let acc=0,penX=path[0][0],penY=path[0][1];
+    for(let i=0;i<segL.length;i++){
+      if(acc+segL[i]<=target){ctx.lineTo(path[i+1][0],path[i+1][1]);penX=path[i+1][0];penY=path[i+1][1];acc+=segL[i];}
+      else{const rem=(target-acc)/segL[i];penX=path[i][0]+(path[i+1][0]-path[i][0])*rem;penY=path[i][1]+(path[i+1][1]-path[i][1])*rem;ctx.lineTo(penX,penY);break;}
+    }
+    ctx.stroke();
+    if(clamp(p/0.6,0,1)<1){ctx.save();ctx.translate(penX,penY);
+      ctx.fillStyle='#eee';ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(7,-8);ctx.lineTo(20,-34);ctx.lineTo(12,-40);ctx.lineTo(-2,-14);ctx.closePath();ctx.fill();
+      ctx.fillStyle=c2;ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(7,-8);ctx.lineTo(3,-11);ctx.closePath();ctx.fill();ctx.restore();}
+    if(p>0.62){const f=easeOut((p-0.62)/0.3);ctx.globalAlpha=env(p)*f;
+      ctx.textAlign='center';ctx.textBaseline='middle';ctx.font='800 '+Math.round(S*0.85)+'px Inter,Arial,sans-serif';
+      const g=ctx.createLinearGradient(cx-S,0,cx+S,0);g.addColorStop(0,c1);g.addColorStop(1,c2);ctx.fillStyle=g;ctx.fillText('NÓVA',cx,cy+S*2.5);}
+    ctx.restore();return 'Branding — marca sendo desenhada';
+  }
+  function sSites(p,c1,c2){
+    const layouts=[['#37e6ff','#5c7bff'],['#ff4ecd','#8b5cff'],['#ffd479','#ff7a59']];
+    const li=Math.min(layouts.length-1,Math.floor(p*layouts.length)),lp=(p*layouts.length)%1,lc=layouts[li];
+    const bw=W*0.64,bh=H*0.56,bx=(W-bw)/2,by=(H-bh)/2;
+    ctx.save();ctx.globalAlpha=env(p)*Math.min(1,lp/0.1)*Math.min(1,(1-lp)/0.12+0.001);
+    ctx.fillStyle='rgba(16,12,26,.96)';rr(bx,by,bw,bh,12);ctx.fill();
+    ctx.strokeStyle='rgba(255,255,255,.1)';ctx.lineWidth=1;ctx.stroke();
+    ctx.fillStyle='rgba(255,255,255,.06)';rr(bx,by,bw,20,12);ctx.fill();
+    ['#ff5f57','#febc2e','#28c840'].forEach((c,i)=>{ctx.fillStyle=c;ctx.beginPath();ctx.arc(bx+12+i*12,by+10,3,0,7);ctx.fill();});
+    ctx.save();rr(bx+2,by+22,bw-4,bh-24,10);ctx.clip();
+    const ix=bx+12,iw=bw-24,iy=by+32;
+    if(lp>0.05){const a=easeOut((lp-0.05)/0.15);ctx.fillStyle='rgba(255,255,255,.5)';rr(ix,iy,26*a,6,3);ctx.fill();
+      ctx.fillStyle='rgba(255,255,255,.2)';for(let i=0;i<3;i++){rr(ix+iw-14-i*20,iy,12*a,5,2);ctx.fill();}}
+    if(lp>0.18){const a=easeOut((lp-0.18)/0.22),hh=bh*0.42*a,hy=iy+16;
+      const g=ctx.createLinearGradient(ix,hy,ix+iw,hy+hh);g.addColorStop(0,lc[0]);g.addColorStop(1,lc[1]);ctx.fillStyle=g;rr(ix,hy,iw,Math.max(2,hh),8);ctx.fill();
+      if(a>0.6){ctx.fillStyle='rgba(255,255,255,.95)';rr(ix+14,hy+hh*0.36,iw*0.5,8,4);ctx.fill();
+        ctx.fillStyle='rgba(255,255,255,.6)';rr(ix+14,hy+hh*0.36+14,iw*0.32,5,3);ctx.fill();
+        ctx.fillStyle='#fff';rr(ix+14,hy+hh*0.36+26,44,13,6);ctx.fill();}}
+    if(lp>0.55){const a=easeOut((lp-0.55)/0.3),cyy=by+bh-46;for(let i=0;i<3;i++){ctx.globalAlpha=env(p)*a;ctx.fillStyle='rgba(255,255,255,.09)';rr(ix+i*(iw/3),cyy,iw/3-8,34,6);ctx.fill();}}
+    ctx.restore();ctx.restore();return 'Sites — sites sendo construídos';
+  }
+  function sVideo(p,c1,c2,now){
+    const bw=W*0.72,bx=(W-bw)/2;
+    ctx.save();ctx.globalAlpha=env(p);
+    const mh=H*0.3,my=H*0.14;
+    ctx.save();rr(bx,my,bw,mh,10);ctx.clip();
+    const t=now/1000,g=ctx.createLinearGradient(bx,my,bx+bw,my+mh);g.addColorStop(0,c1);g.addColorStop(1,c2);ctx.fillStyle=g;ctx.fillRect(bx,my,bw,mh);
+    ctx.globalCompositeOperation='lighter';ctx.fillStyle='rgba(255,255,255,.22)';
+    ctx.beginPath();ctx.arc(bx+bw*(0.5+0.28*Math.sin(t)),my+mh*(0.5+0.22*Math.cos(t*1.2)),mh*0.38,0,7);ctx.fill();
+    ctx.globalCompositeOperation='source-over';ctx.restore();
+    ctx.strokeStyle='rgba(255,255,255,.12)';rr(bx,my,bw,mh,10);ctx.stroke();
+    ctx.fillStyle='rgba(255,255,255,.85)';const pcx=bx+bw/2,pcy=my+mh/2;ctx.beginPath();ctx.moveTo(pcx-6,pcy-9);ctx.lineTo(pcx-6,pcy+9);ctx.lineTo(pcx+10,pcy);ctx.closePath();ctx.fill();
+    const ty=my+mh+16,tw=bw,tx=bx,TH=H*0.3;
+    ctx.fillStyle='rgba(255,255,255,.05)';rr(tx,ty,tw,TH,8);ctx.fill();
+    const rows=3,rh=(TH-16)/rows,clipCols=[c1,c2,'#37e6ff','#ffd479','#ff4e7d'];
+    for(let r=0;r<rows;r++){const ry=ty+8+r*rh;let x=tx+8,i=0;
+      while(x<tx+tw-8){const cwn=30+((r*7+i*13)%55),grow=easeOut(clamp(p*2-r*0.1,0,1)),wpx=Math.min(cwn,tx+tw-8-x)*grow+0.5;
+        ctx.fillStyle=hex(clipCols[(r+i)%clipCols.length],.75);rr(x,ry,wpx,rh-6,4);ctx.fill();
+        if(r===2){ctx.strokeStyle='rgba(255,255,255,.5)';ctx.lineWidth=1;ctx.beginPath();for(let w=2;w<wpx-2;w+=3){const hh=(rh-10)*Math.abs(Math.sin((x+w)*0.15));ctx.moveTo(x+w,ry+(rh-6)/2-hh/2);ctx.lineTo(x+w,ry+(rh-6)/2+hh/2);}ctx.stroke();}
+        x+=cwn+6;i++;}}
+    const ph=tx+8+p*(tw-16);ctx.strokeStyle='#ff4e7d';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(ph,ty+2);ctx.lineTo(ph,ty+TH-2);ctx.stroke();
+    ctx.fillStyle='#ff4e7d';ctx.beginPath();ctx.moveTo(ph-4,ty+2);ctx.lineTo(ph+4,ty+2);ctx.lineTo(ph,ty+9);ctx.closePath();ctx.fill();
+    ctx.restore();return 'Vídeo — edição em andamento';
+  }
+  function sSocial(p,c1,c2){
+    const pw=W*0.34,ph=H*0.64,px=(W-pw)/2,py=(H-ph)/2;
+    ctx.save();ctx.globalAlpha=env(p);
+    ctx.fillStyle='rgba(10,7,18,.98)';rr(px,py,pw,ph,20);ctx.fill();
+    ctx.strokeStyle='rgba(255,255,255,.12)';ctx.lineWidth=1;ctx.stroke();
+    ctx.fillStyle='rgba(0,0,0,.8)';rr(px+pw/2-14,py+6,28,6,3);ctx.fill();
+    const hx0=px+12,hy0=py+22;ctx.fillStyle=c1;ctx.beginPath();ctx.arc(hx0+8,hy0+8,8,0,7);ctx.fill();
+    ctx.fillStyle='rgba(255,255,255,.7)';rr(hx0+22,hy0+3,pw*0.4,5,3);ctx.fill();rr(hx0+22,hy0+12,pw*0.26,4,2);ctx.fill();
+    const gx=px+10,gy=py+44,gw=pw-20,cell=(gw-8)/3,cols=[c1,c2,'#37e6ff','#ffd479','#ff4e7d','#8b5cff'];
+    for(let i=0;i<9;i++){const r=Math.floor(i/3),cc=i%3,thr=i/9,a=easeOut(clamp((p-thr*0.8)/0.14,0,1));if(a<=0)continue;
+      const s=cell*(0.55+0.45*a),ox=gx+cc*(cell+4)+(cell-s)/2,oy=gy+r*(cell+4)+(cell-s)/2;
+      ctx.globalAlpha=env(p)*a;const g=ctx.createLinearGradient(ox,oy,ox+s,oy+s);g.addColorStop(0,cols[i%cols.length]);g.addColorStop(1,cols[(i+2)%cols.length]);ctx.fillStyle=g;rr(ox,oy,s,s,5);ctx.fill();}
+    ctx.restore();return 'Social — feed sendo montado';
+  }
+  function s3D(p,c1,c2){
+    const cx=W/2,cy=H*0.55,tw=Math.min(W,H)*0.1,th=tw*0.5;
+    ctx.save();ctx.globalAlpha=env(p);
+    const blds=[[-1,-1,1.2],[0,-1,1.8],[1,-1,1.0],[-1,0,2.2],[0,0,2.8],[1,0,1.5],[-1,1,1.0],[0,1,1.6],[1,1,2.0]];
+    blds.map((b,i)=>({b,i,d:b[0]+b[1]})).sort((a,b)=>a.d-b.d).forEach(({b,i})=>{
+      const a=easeOut(clamp((p-(i/blds.length)*0.7)/0.18,0,1));if(a<=0)return;
+      const gx=b[0],gy=b[1],hgt=b[2]*tw*a,sx=cx+(gx-gy)*tw,sy=cy+(gx+gy)*th,topY=sy-hgt;
+      ctx.fillStyle=hex(c1,.9);ctx.beginPath();ctx.moveTo(sx,topY-th);ctx.lineTo(sx+tw,topY);ctx.lineTo(sx,topY+th);ctx.lineTo(sx-tw,topY);ctx.closePath();ctx.fill();
+      ctx.fillStyle=hex(c2,.7);ctx.beginPath();ctx.moveTo(sx-tw,topY);ctx.lineTo(sx,topY+th);ctx.lineTo(sx,sy+th);ctx.lineTo(sx-tw,sy);ctx.closePath();ctx.fill();
+      ctx.fillStyle=hex(c2,.42);ctx.beginPath();ctx.moveTo(sx+tw,topY);ctx.lineTo(sx,topY+th);ctx.lineTo(sx,sy+th);ctx.lineTo(sx+tw,sy);ctx.closePath();ctx.fill();
+      ctx.strokeStyle='rgba(255,255,255,.15)';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(sx,topY-th);ctx.lineTo(sx+tw,topY);ctx.lineTo(sx,topY+th);ctx.lineTo(sx-tw,topY);ctx.closePath();ctx.stroke();});
+    ctx.restore();return 'Prototipagem 3D — maquete em construção';
+  }
+  const campLines=[['OBJETIVO','Lançar a nova coleção cápsula'],['PÚBLICO','25–40, criativos, mobile-first'],['MENSAGEM','Menos é mais. Feito pra durar.'],['CANAIS','Reels · Stories · E-mail'],['CTA','Garanta o seu — link na bio']];
+  function sCampaign(p,c1,c2,now){
+    const bw=W*0.7,bh=H*0.6,bx=(W-bw)/2,by=(H-bh)/2;
+    ctx.save();ctx.globalAlpha=env(p);
+    ctx.fillStyle='rgba(255,255,255,.06)';rr(bx,by,bw,bh,12);ctx.fill();
+    ctx.strokeStyle='rgba(255,255,255,.1)';ctx.lineWidth=1;ctx.stroke();
+    ctx.textAlign='left';ctx.textBaseline='alphabetic';
+    ctx.fillStyle=c1;ctx.font='800 13px Inter,Arial,sans-serif';ctx.fillText('CAMPANHA · LANÇAMENTO',bx+16,by+26);
+    ctx.strokeStyle='rgba(255,255,255,.12)';ctx.beginPath();ctx.moveTo(bx+16,by+36);ctx.lineTo(bx+bw-16,by+36);ctx.stroke();
+    let total=0;campLines.forEach(l=>total+=l[0].length+l[1].length);
+    const shown=Math.floor(easeOut(p)*total*1.05);let used=0,yy=by+58;
+    for(let i=0;i<campLines.length;i++){const k=campLines[i][0],v=campLines[i][1];
+      const kShown=Math.max(0,Math.min(k.length,shown-used));used+=k.length;
+      ctx.fillStyle=hex(c2,.95);ctx.font='700 11px Inter,Arial,sans-serif';ctx.fillText(k.slice(0,kShown),bx+16,yy);
+      const vShown=Math.max(0,Math.min(v.length,shown-used));used+=v.length;
+      ctx.fillStyle='rgba(255,255,255,.85)';ctx.font='400 13px Inter,Arial,sans-serif';
+      if(kShown>=k.length)ctx.fillText(v.slice(0,vShown),bx+16,yy+16);
+      if(shown>=used-v.length&&shown<used){const cw=ctx.measureText(v.slice(0,vShown)).width;if(Math.floor(now/400)%2===0){ctx.fillStyle='#fff';ctx.fillRect(bx+17+cw,yy+6,2,12);}}
+      yy+=42;}
+    ctx.restore();return 'Campanhas — roteiro sendo escrito';
+  }
+  function sApps(p,c1,c2){
+    const pw=W*0.32,ph=H*0.62,px=(W-pw)/2,py=(H-ph)/2;
+    ctx.save();ctx.globalAlpha=env(p);
+    ctx.fillStyle='rgba(10,7,18,.98)';rr(px,py,pw,ph,20);ctx.fill();
+    ctx.strokeStyle='rgba(255,255,255,.12)';ctx.lineWidth=1;ctx.stroke();
+    ctx.fillStyle='rgba(0,0,0,.8)';rr(px+pw/2-14,py+6,28,6,3);ctx.fill();
+    ctx.save();rr(px+6,py+16,pw-12,ph-32,14);ctx.clip();
+    const ix=px+14,iw=pw-28;
+    if(p>0.05){const a=easeOut((p-0.05)/0.15);ctx.globalAlpha=env(p)*a;ctx.fillStyle='#fff';rr(ix,py+30,iw*0.5,8,4);ctx.fill();ctx.fillStyle=c1;ctx.beginPath();ctx.arc(px+pw-24,py+34,7,0,7);ctx.fill();}
+    if(p>0.22){const a=easeOut((p-0.22)/0.2);ctx.globalAlpha=env(p)*a;const g=ctx.createLinearGradient(ix,0,ix+iw,0);g.addColorStop(0,c1);g.addColorStop(1,c2);ctx.fillStyle=g;rr(ix,py+50,iw,ph*0.22*a+2,12);ctx.fill();}
+    if(p>0.45){for(let i=0;i<3;i++){const a=easeOut(clamp((p-0.45-i*0.12)/0.14,0,1));if(a<=0)continue;ctx.globalAlpha=env(p)*a;const ry=py+ph*0.42+i*40;ctx.fillStyle='rgba(255,255,255,.09)';rr(ix,ry,iw,32,8);ctx.fill();ctx.fillStyle=c2;rr(ix+6,ry+6,20,20,6);ctx.fill();ctx.fillStyle='rgba(255,255,255,.42)';rr(ix+32,ry+8,iw*0.5,5,3);ctx.fill();rr(ix+32,ry+18,iw*0.3,4,2);ctx.fill();}}
+    ctx.restore();
+    if(p>0.8){const a=easeOut((p-0.8)/0.15);ctx.globalAlpha=env(p)*a;ctx.fillStyle='rgba(255,255,255,.06)';rr(px+6,py+ph-30,pw-12,24,8);ctx.fill();
+      for(let i=0;i<4;i++){ctx.fillStyle=i===0?c1:'rgba(255,255,255,.3)';rr(px+18+i*((pw-36)/4),py+ph-22,10,8,3);ctx.fill();}}
+    ctx.restore();return 'Apps — aplicativo em construção';
+  }
+  const scenes=[
+    {fn:sBranding,c1:'#ff4ecd',c2:'#8b5cff',name:'Branding'},
+    {fn:sSites,c1:'#37e6ff',c2:'#5c7bff',name:'Sites'},
+    {fn:sApps,c1:'#37e6ff',c2:'#ff4ecd',name:'Apps'},
+    {fn:sVideo,c1:'#a24bff',c2:'#ff4ecd',name:'Vídeo'},
+    {fn:sSocial,c1:'#ff4e7d',c2:'#8b5cff',name:'Social'},
+    {fn:s3D,c1:'#8b5cff',c2:'#37e6ff',name:'3D'},
+    {fn:sCampaign,c1:'#ffd479',c2:'#ff7a59',name:'Campanhas'}
+  ];
+  const N=scenes.length,DUR=4.4,TOTAL=N*DUR;
+  scenes.forEach(()=>{const b=document.createElement('b');dotsEl.appendChild(b);});
+  const dots=[...dotsEl.children];
+  let t0=performance.now(),prevIdx=-1;
+  function frame(now){
+    if(!W)resize();
+    const t=((now-t0)/1000)%TOTAL,idx=Math.floor(t/DUR)%N,p=(t%DUR)/DUR,sc=scenes[idx];
+    bg(now,sc.c1,sc.c2);
+    let sub='';try{sub=sc.fn(p,sc.c1,sc.c2,now);}catch(e){}
+    label(sc.name,sc.c1);
+    const vg=ctx.createRadialGradient(W/2,H*0.45,H*0.2,W/2,H*0.5,H*0.85);vg.addColorStop(0,'rgba(0,0,0,0)');vg.addColorStop(1,'rgba(0,0,0,.48)');ctx.fillStyle=vg;ctx.fillRect(0,0,W,H);
+    if(idx!==prevIdx){prevIdx=idx;if(subEl&&sub)subEl.textContent=sub.split(' — ')[0];dots.forEach((d,i)=>d.classList.toggle('on',i===idx));}
+    if(tcEl){const s=Math.floor(t);tcEl.textContent='00:'+String(s).padStart(2,'0');}
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+})();
+
+/* ---------- Nav + burger ---------- */
+const nav=document.getElementById('nav'),links=document.getElementById('navLinks'),burger=document.getElementById('burger');
+addEventListener('scroll',()=>{nav.classList.toggle('scrolled',scrollY>40);});
+burger.addEventListener('click',()=>{links.classList.toggle('open');
+  [...burger.children].forEach((s,i)=>{s.style.transform=links.classList.contains('open')?
+    (i===0?'rotate(45deg) translate(5px,5px)':i===1?'scaleX(0)':'rotate(-45deg) translate(5px,-5px)'):'';});});
+links.querySelectorAll('a').forEach(a=>a.addEventListener('click',()=>{links.classList.remove('open');
+  [...burger.children].forEach(s=>s.style.transform='');}));
+
+/* ---------- Reveal on scroll ---------- */
+const io=new IntersectionObserver((es)=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target);}}),{threshold:.14});
+document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
+
+/* ---------- Service card glow follow ---------- */
+document.querySelectorAll('.svc').forEach(s=>s.addEventListener('mousemove',e=>{
+  const b=s.getBoundingClientRect();s.style.setProperty('--mx',(e.clientX-b.left)+'px');s.style.setProperty('--my',(e.clientY-b.top)+'px');}));
+
+/* ---------- Chips ---------- */
+document.querySelectorAll('#chips .chip').forEach(c=>c.addEventListener('click',()=>c.classList.toggle('on')));
+
+/* ---------- Form -> mailto ---------- */
+document.getElementById('submitBtn').addEventListener('click',()=>{
+  const nome=document.getElementById('nome').value.trim();
+  const email=document.getElementById('email').value.trim();
+  const msg=document.getElementById('msg').value.trim();
+  const note=document.getElementById('formNote');
+  if(!nome||!email||!msg){note.textContent='Preencha nome, e-mail e mensagem, por favor.';note.style.color='#ff6b8a';return;}
+  const svc=[...document.querySelectorAll('#chips .chip.on')].map(c=>c.textContent).join(', ')||'—';
+  const body=`Nome: ${nome}%0D%0AE-mail: ${email}%0D%0AServiços: ${svc}%0D%0A%0D%0A${msg}`;
+  window.location.href=`mailto:mbrgprodutosltda@gmail.com?subject=Novo projeto — ${encodeURIComponent(nome)}&body=${body}`;
+  note.textContent='Abrindo seu e-mail...';note.style.color='var(--violet)';
+});
+
+/* ---------- Hero parallax ---------- */
+addEventListener('scroll',()=>{const y=scrollY;const h1=document.querySelector('.hero h1');
+  if(h1&&y<innerHeight)h1.style.transform=`translateY(${y*.15}px)`;});
+</script>
+<a class="wa-fab" href="https://wa.me/5541999128463?text=Ol%C3%A1!%20Vim%20pelo%20site%20e%20quero%20iniciar%20um%20projeto." target="_blank" rel="noopener" aria-label="Falar no WhatsApp">
+  <svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path fill="currentColor" d="M16 .6C7.5.6.6 7.5.6 16c0 2.8.7 5.4 2.1 7.8L.5 31.5l7.9-2.1c2.3 1.3 4.9 2 7.6 2 8.5 0 15.4-6.9 15.4-15.4S24.5.6 16 .6zm0 28.2c-2.5 0-4.8-.7-6.8-1.9l-.5-.3-4.7 1.2 1.3-4.6-.3-.5a12.7 12.7 0 01-2-6.8C3.2 8.9 9 3.1 16 3.1S28.9 8.9 28.9 16 23.1 28.8 16 28.8zm7.1-9.6c-.4-.2-2.3-1.1-2.6-1.3-.4-.1-.6-.2-.9.2-.3.4-1 1.2-1.2 1.5-.2.2-.4.3-.8.1-2.3-1.1-3.8-2-5.3-4.6-.4-.7.4-.6 1.1-2.1.1-.2.1-.4 0-.6-.1-.2-.9-2.1-1.2-2.9-.3-.7-.6-.6-.9-.6h-.7c-.2 0-.6.1-1 .5-.3.4-1.3 1.3-1.3 3.1s1.4 3.6 1.5 3.9c.2.2 2.6 4 6.3 5.6 2.4 1 3.3 1.1 4.5.9.7-.1 2.3-.9 2.6-1.9.3-.9.3-1.7.2-1.9-.1-.1-.3-.2-.7-.4z"/></svg>
+</a>
+<script>setTimeout(function(){var p=document.getElementById("preloader");if(p)p.classList.add("done");},2800);</script>
+</body>
+</html>
