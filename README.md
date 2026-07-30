@@ -4,6 +4,33 @@ Site institucional (single-file, HTML/CSS/JS puro, sem dependências externas).
 
 ## Deploy no Cloudflare Pages
 
+### Deploy automatico
+Todo push para `main` roda `.github/workflows/deploy.yml`, que:
+
+1. publica o site no Cloudflare Pages;
+2. garante o dominio `www.nvaestudio.com`;
+3. cria/atualiza o DNS `www -> novaestudio.pages.dev`.
+
+Secrets necessarios no GitHub:
+
+```text
+CLOUDFLARE_ACCOUNT_ID=a2cf92efff3b498bce86124be2ce4352
+CLOUDFLARE_API_TOKEN=<token com Pages Edit + Zone DNS Edit>
+```
+
+O token Cloudflare deve ser escopado assim:
+
+```text
+Account permissions:
+- Cloudflare Pages: Edit
+
+Zone permissions:
+- DNS: Edit
+
+Zone resources:
+- Include: nvaestudio.com
+```
+
 ### Publicar via Wrangler
 ```bash
 npx wrangler pages deploy . --project-name novaestudio --branch main --commit-dirty=true
