@@ -4,7 +4,7 @@ set -euo pipefail
 ACCOUNT_ID="${ACCOUNT_ID:-a2cf92efff3b498bce86124be2ce4352}"
 PROJECT_NAME="${PROJECT_NAME:-novaestudio}"
 ZONE_NAME="${ZONE_NAME:-nvaestudio.com}"
-HOSTNAME="${HOSTNAME:-www.nvaestudio.com}"
+CUSTOM_DOMAIN="${CUSTOM_DOMAIN:-www.nvaestudio.com}"
 PAGES_TARGET="${PAGES_TARGET:-novaestudio.pages.dev}"
 KEYCHAIN_SERVICE="${KEYCHAIN_SERVICE:-cloudflare-dns-api-token}"
 
@@ -75,26 +75,29 @@ if [[ -z "$zone_id" ]]; then
   exit 4
 fi
 
-echo "Adding ${HOSTNAME} to Pages project ${PROJECT_NAME}..."
-set +e
-pages_add_response="$(api POST "/accounts/${ACCOUNT_ID}/pages/projects/${PROJECT_NAME}/domains" "{\"name\":\"${HOSTNAME}\"}" 2>&1)"
-pages_add_code="$?"
-set -e
-if [[ "$pages_add_code" -ne 0 ]]; then
-  if grep -qi "already" <<<"$pages_add_response"; then
-    echo "Pages domain already exists."
-  else
-    echo "$pages_add_response" >&2
-    exit 5
-  fi
+echo "Adding ${CUSTOM_DOMAIN} to Pages project ${PROJECT_NAME}..."
+pages_add_response="$(curl -sS \
+  -X POST "https://api.cloudflare.com/client/v4/accounts/${ACCOUNT_ID}/pages/projects/${PROJECT_NAME}/domains" \
+  -H "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}" \
+  -H "Content-Type: application/json" \
+  --data "{\"name\":\"${CUSTOM_DOMAIN}\"}")"
+pages_add_success="$(jq -r '.success' <<<"$pages_add_response")"
+pages_add_error_code="$(jq -r '.errors[0].code // empty' <<<"$pages_add_response")"
+if [[ "$pages_add_success" == "true" ]]; then
+  echo "Pages domain added."
+elif [[ "$pages_add_error_code" == "8000018" ]]; then
+  echo "Pages domain already exists."
+else
+  echo "$pages_add_response" >&2
+  exit 5
 fi
 
-echo "Upserting DNS CNAME ${HOSTNAME} -> ${PAGES_TARGET}..."
-records_response="$(api GET "/zones/${zone_id}/dns_records?type=CNAME&name=${HOSTNAME}")"
+echo "Upserting DNS CNAME ${CUSTOM_DOMAIN} -> ${PAGES_TARGET}..."
+records_response="$(api GET "/zones/${zone_id}/dns_records?type=CNAME&name=${CUSTOM_DOMAIN}")"
 record_id="$(jq -r '.result[0].id // empty' <<<"$records_response")"
 record_payload="$(jq -cn \
   --arg type "CNAME" \
-  --arg name "$HOSTNAME" \
+  --arg name "$CUSTOM_DOMAIN" \
   --arg content "$PAGES_TARGET" \
   '{type:$type,name:$name,content:$content,ttl:1,proxied:true}')"
 
@@ -108,12 +111,12 @@ fi
 
 echo "Current DNS:"
 if command -v dig >/dev/null 2>&1; then
-  dig +short CNAME "$HOSTNAME" || true
+  dig +short CNAME "$CUSTOM_DOMAIN" || true
 fi
 
 echo "Pages domain status:"
 api GET "/accounts/${ACCOUNT_ID}/pages/projects/${PROJECT_NAME}/domains" |
-  jq -r --arg hostname "$HOSTNAME" '
+  jq -r --arg hostname "$CUSTOM_DOMAIN" '
     .result[]
     | select(.name == $hostname)
     | {
@@ -124,4 +127,4 @@ api GET "/accounts/${ACCOUNT_ID}/pages/projects/${PROJECT_NAME}/domains" |
         validation: .validation_data.status
       }'
 
-echo "Done. Open: https://${HOSTNAME}"
+echo "Done. Open: https://${CUSTOM_DOMAIN}"

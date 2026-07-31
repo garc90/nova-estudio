@@ -29,6 +29,6 @@ jobs:
           ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           PROJECT_NAME: novaestudio
           ZONE_NAME: nvaestudio.com
-          HOSTNAME: www.nvaestudio.com
+          CUSTOM_DOMAIN: www.nvaestudio.com
           PAGES_TARGET: novaestudio.pages.dev
         run: ./scripts/cloudflare-domain.sh
