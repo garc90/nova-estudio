@@ -162,6 +162,38 @@
     transition:.4s;color:var(--violet)}
   .svc:hover .arrow{opacity:1;transform:none}
 
+  /* Clients */
+  .client-strip{display:grid;grid-template-columns:.8fr 1.2fr;gap:58px;align-items:start}
+  .client-intro{position:sticky;top:110px}
+  .client-intro h2{font-size:clamp(2rem,5vw,3.8rem);line-height:1.03;margin-bottom:22px}
+  .client-intro p{color:var(--ink-dim);font-size:1.02rem;line-height:1.7;max-width:430px}
+  .client-list{display:grid;gap:18px}
+  .client-card{position:relative;display:grid;grid-template-columns:1fr auto;gap:28px;align-items:end;
+    min-height:220px;padding:34px;border:1px solid var(--line);border-radius:18px;overflow:hidden;
+    background:linear-gradient(135deg,rgba(255,255,255,.055),rgba(255,255,255,.018));
+    transition:transform .35s,border-color .35s,background .35s}
+  .client-card::before{content:'';position:absolute;inset:0;opacity:.86;z-index:-1;
+    background:radial-gradient(520px 280px at 78% 8%,var(--client-glow),transparent 64%),
+      linear-gradient(145deg,rgba(255,255,255,.035),rgba(255,255,255,0))}
+  .client-card::after{content:'';position:absolute;right:32px;top:32px;width:86px;height:86px;border-radius:50%;
+    border:1px solid rgba(255,255,255,.12);background:linear-gradient(135deg,var(--client-a),var(--client-b));
+    opacity:.9;filter:saturate(1.1);transition:transform .45s}
+  .client-card:hover{transform:translateY(-5px);border-color:rgba(255,255,255,.22);
+    background:linear-gradient(135deg,rgba(255,255,255,.075),rgba(255,255,255,.025))}
+  .client-card:hover::after{transform:scale(1.12) rotate(12deg)}
+  .client-kicker{font-size:.68rem;color:var(--client-a);letter-spacing:.26em;text-transform:uppercase;margin-bottom:18px}
+  .client-card h3{font-size:clamp(1.8rem,3.3vw,3rem);margin-bottom:14px}
+  .client-card p{color:var(--ink-dim);font-size:.97rem;line-height:1.62;max-width:520px}
+  .client-arrow{position:relative;z-index:1;width:48px;height:48px;border-radius:50%;display:grid;place-items:center;
+    border:1px solid rgba(255,255,255,.16);color:var(--ink);font-size:1.2rem;transition:.35s}
+  .client-card:hover .client-arrow{background:var(--ink);color:#090510;transform:translate(3px,-3px)}
+  .client-meta{display:flex;flex-wrap:wrap;gap:8px;margin-top:22px}
+  .client-meta span{font-size:.72rem;color:var(--ink-dim);border:1px solid var(--line);border-radius:999px;
+    padding:6px 11px;background:rgba(0,0,0,.12)}
+  .client-wallart{--client-a:#ffd479;--client-b:#37e6ff;--client-glow:rgba(255,212,121,.2)}
+  .client-adorno{--client-a:#37e6ff;--client-b:#8b5cff;--client-glow:rgba(55,230,255,.18)}
+  .client-carbon{--client-a:#ff6b4a;--client-b:#d7dde8;--client-glow:rgba(255,107,74,.16)}
+
   /* Process */
   .proc{display:grid;grid-template-columns:repeat(4,1fr);gap:28px}
   .step{position:relative;padding-top:30px;border-top:1px solid var(--line)}
@@ -246,6 +278,8 @@
   .reveal.in{opacity:1;transform:none}
 
   @media(max-width:900px){
+    body{cursor:auto}
+    .cursor,.cursor-dot{display:none}
     .nav-links{position:fixed;inset:0;background:rgba(5,3,8,.97);backdrop-filter:blur(20px);
       flex-direction:column;justify-content:center;gap:34px;transform:translateX(100%);transition:transform .5s;z-index:105}
     .nav-links.open{transform:none}
@@ -253,6 +287,8 @@
     .burger{display:flex}
     .svc-grid{grid-template-columns:1fr}
     .svc{border-right:none!important;padding-right:0}
+    .client-strip{grid-template-columns:1fr;gap:38px}
+    .client-intro{position:relative;top:auto}
     .proc{grid-template-columns:1fr 1fr}
     .why{grid-template-columns:1fr;gap:40px}
     .studio-card{max-width:440px;width:100%;margin:0 auto}
@@ -274,6 +310,11 @@
     .why > div:first-child h2,.why > div:first-child p{margin-left:auto;margin-right:auto}
     .contact-info{text-align:center}
     .contact-info .socials{justify-content:center}
+    .client-intro{text-align:center}
+    .client-intro p{margin-left:auto;margin-right:auto}
+    .client-card{grid-template-columns:1fr;gap:24px;text-align:left}
+    .client-card::after{width:64px;height:64px;right:24px;top:24px}
+    .client-arrow{justify-self:start}
     .submit{justify-self:center}
   }
   @media(max-width:520px){
@@ -323,6 +364,7 @@
   <a href="#top" class="brand"><span class="orb"></span>NÓVA</a>
   <div class="nav-links" id="navLinks">
     <a href="#servicos">Serviços</a>
+    <a href="#clientes">Clientes</a>
     <a href="#processo">Processo</a>
     <a href="#estudio">Estúdio</a>
     <a href="#contato" class="nav-cta">Vamos conversar</a>
@@ -422,6 +464,46 @@
         <p>Apps mobile e web sob medida — do protótipo à publicação, com foco em experiência e performance.</p>
         <div class="doit"><b>iOS &amp; Android</b><b>Web apps</b><b>UX/UI</b></div>
       </div>
+    </div>
+  </div>
+</section>
+
+<!-- Clients -->
+<section class="sec-pad" id="clientes">
+  <div class="wrap client-strip">
+    <div class="client-intro reveal">
+      <div class="eyebrow">Clientes</div>
+      <h2>Projetos que já estão no ar.</h2>
+      <p>Algumas marcas e produtos digitais que carregam direção criativa, interface, tecnologia e lançamento com assinatura NÓVA.</p>
+    </div>
+    <div class="client-list">
+      <a class="client-card client-wallart reveal" href="https://wallartgen.com" target="_blank" rel="noopener">
+        <div>
+          <div class="client-kicker">Gerador 3D paramétrico</div>
+          <h3>WallArt</h3>
+          <p>Estúdio de wall art paramétrica: o usuário move ímãs, ajusta cor e relevo em tempo real e exporta arquivos prontos para impressão 3D.</p>
+          <div class="client-meta"><span>Produto digital</span><span>Landing page</span><span>3D</span></div>
+        </div>
+        <span class="client-arrow">↗</span>
+      </a>
+      <a class="client-card client-adorno reveal" href="https://myadorno.com/" target="_blank" rel="noopener">
+        <div>
+          <div class="client-kicker">Catálogo e gerador</div>
+          <h3>Adorno</h3>
+          <p>Gerador paramétrico de puxadores para móveis, com catálogo, parâmetros editáveis e formatos de exportação pensados para quem imprime e vende.</p>
+          <div class="client-meta"><span>SaaS</span><span>Paramétrico</span><span>Web app</span></div>
+        </div>
+        <span class="client-arrow">↗</span>
+      </a>
+      <a class="client-card client-carbon reveal" href="https://officinacarbon.com" target="_blank" rel="noopener">
+        <div>
+          <div class="client-kicker">Marca em preparação</div>
+          <h3>Officina Carbon</h3>
+          <p>Presença digital em construção para uma marca com linguagem industrial, direta e premium. Primeira etapa no ar enquanto o projeto avança.</p>
+          <div class="client-meta"><span>Branding</span><span>Site</span><span>Em breve</span></div>
+        </div>
+        <span class="client-arrow">↗</span>
+      </a>
     </div>
   </div>
 </section>
@@ -534,7 +616,7 @@
   let x=innerWidth/2,y=innerHeight/2,cx=x,cy=y;
   addEventListener('mousemove',e=>{x=e.clientX;y=e.clientY;d.style.left=x+'px';d.style.top=y+'px';});
   (function loop(){cx+=(x-cx)*.16;cy+=(y-cy)*.16;c.style.left=cx+'px';c.style.top=cy+'px';requestAnimationFrame(loop);})();
-  const grow='a,button,.chip,.svc,.tag,.socials a,.big-link,.burger';
+  const grow='a,button,.chip,.svc,.tag,.client-card,.socials a,.big-link,.burger';
   document.querySelectorAll(grow).forEach(el=>{
     el.addEventListener('mouseenter',()=>c.classList.add('grow'));
     el.addEventListener('mouseleave',()=>c.classList.remove('grow'));
@@ -778,7 +860,7 @@
   let t0=performance.now(),prevIdx=-1;
   function frame(now){
     if(!W)resize();
-    const t=((now-t0)/1000)%TOTAL,idx=Math.floor(t/DUR)%N,p=(t%DUR)/DUR,sc=scenes[idx];
+    const t=((now-t0)/1000)%TOTAL,idx=((Math.floor(t/DUR)%N)+N)%N,p=(t%DUR)/DUR,sc=scenes[idx]||scenes[0];
     bg(now,sc.c1,sc.c2);
     let sub='';try{sub=sc.fn(p,sc.c1,sc.c2,now);}catch(e){}
     label(sc.name,sc.c1);
